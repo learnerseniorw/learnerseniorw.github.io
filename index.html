@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>高中英文單字庫（大考中心 111 學年度起適用）</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#2563eb">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<style>
+  :root {
+    --bg: #f6f7f9;
+    --card: #ffffff;
+    --ink: #1f2430;
+    --muted: #6b7280;
+    --line: #e5e7eb;
+    --accent: #2563eb;
+    --accent-soft: #eff6ff;
+    --l1: #16a34a;
+    --l2: #0891b2;
+    --l3: #2563eb;
+    --l4: #7c3aed;
+    --l5: #db2777;
+    --l6: #ea580c;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "Segoe UI", "Microsoft JhengHei", "PingFang TC", system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    min-height: 100vh;
+  }
+  header {
+    background: linear-gradient(135deg, #1e3a8a, #2563eb);
+    color: #fff;
+    padding: 32px 20px 28px;
+    text-align: center;
+  }
+  header h1 { font-size: 26px; font-weight: 700; letter-spacing: 1px; }
+  header p { margin-top: 8px; font-size: 14px; opacity: .85; }
+  .stats {
+    display: flex; flex-wrap: wrap; justify-content: center; gap: 10px;
+    margin-top: 18px;
+  }
+  .stat {
+    background: rgba(255,255,255,.14);
+    border: 1px solid rgba(255,255,255,.25);
+    border-radius: 10px;
+    padding: 6px 14px;
+    font-size: 13px;
+  }
+  .stat b { font-size: 16px; margin-right: 4px; }
+  main { max-width: 860px; margin: 0 auto; padding: 20px 16px 60px; }
+  .controls {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 16px;
+    position: sticky; top: 8px; z-index: 5;
+    box-shadow: 0 4px 14px rgba(31,36,48,.06);
+  }
+  .search-row { display: flex; gap: 10px; align-items: center; }
+  #q {
+    flex: 1; padding: 11px 14px; font-size: 15px;
+    border: 1px solid var(--line); border-radius: 8px;
+    outline: none; background: #fff;
+  }
+  #q:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+  .levels { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+  .lvl-btn {
+    border: 1px solid var(--line); background: #fff; color: var(--ink);
+    padding: 6px 14px; border-radius: 999px; font-size: 13px; cursor: pointer;
+    transition: all .15s ease;
+  }
+  .lvl-btn:hover { border-color: var(--accent); }
+  .lvl-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .lvl-btn .cnt { opacity: .65; font-size: 11px; margin-left: 4px; }
+  .result-info { margin: 16px 4px 8px; font-size: 13px; color: var(--muted); }
+  table { width: 100%; border-collapse: collapse; background: var(--card); }
+  th, td { text-align: left; padding: 9px 14px; font-size: 15px; border-bottom: 1px solid var(--line); }
+  th { background: #fafbfc; font-weight: 600; color: var(--muted); font-size: 13px; }
+  tr:hover td { background: #f9fafb; }
+  .badge {
+    display: inline-block; min-width: 28px; text-align: center;
+    padding: 2px 8px; border-radius: 999px; font-size: 12px; font-weight: 700; color: #fff;
+  }
+  .word { font-weight: 600; font-size: 15.5px; letter-spacing: .2px; }
+  .word.clickable { cursor: pointer; }
+  .word.clickable .chev { color: var(--muted); font-size: 11px; margin-left: 6px; }
+  .has-sent { font-size: 12px; color: var(--muted); margin-left: 8px; }
+  .detail-row td { background: #f8fafc; padding: 12px 14px 14px 28px; }
+  .fam-block { margin-bottom: 14px; }
+  .fam-block .fam-label { font-size: 12px; color: var(--muted); font-weight: 600; margin-bottom: 6px; }
+  .fam-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .fam-chip {
+    display: inline-block; padding: 3px 10px; border-radius: 999px;
+    font-size: 12.5px; background: #fff; border: 1px solid var(--line); color: var(--ink);
+    cursor: default;
+  }
+  .fam-chip.link { cursor: pointer; border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+  .fam-chip.link:hover { background: var(--accent); color: #fff; }
+  .fam-more { font-size: 12px; color: var(--accent); cursor: pointer; margin-left: 4px; }
+  .sent-block { margin-bottom: 12px; }
+  .sent-block:last-child { margin-bottom: 0; }
+  .sent-block .sent-exam { font-size: 12px; color: var(--accent); font-weight: 600; margin-bottom: 3px; }
+  .sent-block .sent-en { font-size: 14.5px; color: var(--ink); line-height: 1.6; }
+  .sent-block .sent-en mark { background: #fde68a; padding: 0 2px; border-radius: 2px; }
+  .sent-block .sent-zh { font-size: 14px; color: #374151; margin-top: 4px; line-height: 1.6; }
+  .empty { text-align: center; color: var(--muted); padding: 40px 0; font-size: 14px; }
+  #loader { text-align: center; color: var(--muted); padding: 30px; font-size: 14px; }
+  footer { text-align: center; color: var(--muted); font-size: 12px; padding: 20px; }
+  .note { font-size: 12px; color: var(--muted); margin-top: 10px; line-height: 1.6; }
+  @media (max-width: 520px) {
+    header h1 { font-size: 20px; }
+    th, td { padding: 8px 10px; font-size: 14px; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>高中英文單字庫</h1>
+  <p>資料來源：大學入學考試中心《高中英文參考詞彙表》111 學年度起適用</p>
+  <div class="stats" id="stats"></div>
+</header>
+
+<main>
+  <div class="controls">
+    <div class="search-row">
+      <input id="q" type="search" placeholder="搜尋英文單字，例如：achieve" autocomplete="off">
+    </div>
+    <div class="levels" id="levels"></div>
+    <div class="note" id="note"></div>
+  </div>
+
+  <div class="result-info" id="info"></div>
+  <div id="loader">資料載入中…</div>
+  <div id="tableWrap" style="display:none"></div>
+  <div id="empty" class="empty" style="display:none">找不到符合條件的單字。</div>
+</main>
+
+<footer>單字資料僅供學習用途。資料以原文件為準。</footer>
+
+<script>
+const LEVEL_COLORS = {1:"#16a34a",2:"#0891b2",3:"#2563eb",4:"#7c3aed",5:"#db2777",6:"#ea580c","++":"#0d9488"};
+
+let META = {};
+let WORDS = [];
+let currentLevel = 0;   // 0 = all, "++" = level++
+let query = "";
+
+const statsEl = document.getElementById("stats");
+const levelsEl = document.getElementById("levels");
+const infoEl = document.getElementById("info");
+const noteEl = document.getElementById("note");
+const loaderEl = document.getElementById("loader");
+const tableWrap = document.getElementById("tableWrap");
+const emptyEl = document.getElementById("empty");
+const qEl = document.getElementById("q");
+
+function levelKey(l) { return l === "++" ? "++" : Number(l); }
+
+function countByLevel() {
+  const c = {1:0,2:0,3:0,4:0,5:0,6:0,"++":0};
+  for (const w of WORDS) c[levelKey(w.level)]++;
+  return c;
+}
+
+function lvlLabel(l) { return l === "++" ? "Lv.++" : "Lv." + l; }
+
+function renderStats(c) {
+  const total = WORDS.length;
+  statsEl.innerHTML =
+    `<span class="stat"><b>${total.toLocaleString()}</b>總單字數</span>` +
+    [1,2,3,4,5,6].map(l => `<span class="stat"><b>${c[l].toLocaleString()}</b>Lv.${l}</span>`).join("") +
+    `<span class="stat"><b>${c["++"].toLocaleString()}</b>Lv.++（模考新字）</span>`;
+}
+
+function renderLevelButtons(c) {
+  const all = `<button class="lvl-btn active" data-lvl="0">全部<span class="cnt">${WORDS.length.toLocaleString()}</span></button>`;
+  const btns = all + [1,2,3,4,5,6].map(l =>
+    `<button class="lvl-btn" data-lvl="${l}">Lv.${l}<span class="cnt">${c[l].toLocaleString()}</span></button>`
+  ).join("") +
+    `<button class="lvl-btn" data-lvl="++">Lv.++<span class="cnt">${c["++"].toLocaleString()}</span></button>`;
+  levelsEl.innerHTML = btns;
+  levelsEl.querySelectorAll(".lvl-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      levelsEl.querySelectorAll(".lvl-btn").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      const v = btn.dataset.lvl;
+      currentLevel = v === "0" ? 0 : (v === "++" ? "++" : parseInt(v, 10));
+      scheduleRender();
+    });
+  });
+}
+
+function levelMatches(w, cur) {
+  if (cur === 0) return true;
+  return String(w.level) === String(cur);
+}
+
+function filtered() {
+  const q = query.toLowerCase().trim();
+  return WORDS.filter(w => {
+    if (!levelMatches(w, currentLevel)) return false;
+    if (q) {
+      const fam = w.fam || [];
+      const famHit = fam.some(f => f.toLowerCase().indexOf(q) !== -1);
+      if (w.word.toLowerCase().indexOf(q) === -1 && !famHit) return false;
+    }
+    return true;
+  });
+}
+
+let renderToken = 0;
+function scheduleRender() {
+  renderToken++;
+  requestAnimationFrame(() => doRender(renderToken));
+}
+
+function esc(s) {
+  return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+}
+
+function sentenceHtml(s, word) {
+  const escRe = (t) => String(t).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const en = esc(s.en);
+  const hl = s.hl || word || "";
+  const enHl = hl
+    ? en.replace(new RegExp("(" + escRe(hl) + ")", "gi"), "<mark>$1</mark>")
+    : en;
+  return `<div class="sent-block">
+    <div class="sent-exam">${esc(s.exam || "模擬考")}</div>
+    <div class="sent-en">${enHl}</div>
+    <div class="sent-zh">${esc(s.zh)}</div>
+  </div>`;
+}
+
+let FAM_CAP = 12;
+let FAM_SET = null;
+function buildFamSet() {
+  if (FAM_SET) return FAM_SET;
+  const set = new Set();
+  for (const w of WORDS) {
+    for (const a of w.word.replace(/[()]/g, " ").split(/[\/, ]+/)) {
+      const t = a.trim().toLowerCase();
+      if (t) set.add(t);
+    }
+  }
+  FAM_SET = set;
+  return set;
+}
+
+function famChipHtml(m, known) {
+  const isKnown = known.has(m.toLowerCase());
+  return `<span class="fam-chip${isKnown ? " link" : ""}">${esc(m)}</span>`;
+}
+
+function familyHtml(w) {
+  const fam = w.fam || [];
+  if (!fam.length) return "";
+  const known = buildFamSet();
+  const shown = fam.slice(0, FAM_CAP);
+  const more = fam.length - shown.length;
+  return `<div class="fam-block">
+    <div class="fam-label">單字家族</div>
+    <div class="fam-chips">${shown.map(m => famChipHtml(m, known)).join("")}
+      ${more > 0 ? `<span class="fam-more">＋${more}</span>` : ""}
+    </div>
+  </div>`;
+}
+
+function bindFamChips(container, w) {
+  const fam = w.fam || [];
+  container.querySelectorAll(".fam-chip.link").forEach(chip => {
+    chip.addEventListener("click", () => {
+      query = chip.textContent;
+      qEl.value = query;
+      scheduleRender();
+    });
+  });
+  container.querySelectorAll(".fam-more").forEach(el => {
+    el.addEventListener("click", () => {
+      const known = buildFamSet();
+      el.outerHTML = fam.slice(FAM_CAP).map(m => famChipHtml(m, known)).join("");
+    });
+  });
+}
+
+function doRender(token) {
+  const list = filtered();
+  if (token !== renderToken) return;
+  infoEl.textContent = `顯示 ${list.length.toLocaleString()} / ${WORDS.length.toLocaleString()} 個單字`;
+
+  if (list.length === 0) {
+    tableWrap.style.display = "none";
+    emptyEl.style.display = "block";
+    return;
+  }
+  emptyEl.style.display = "none";
+  tableWrap.style.display = "block";
+
+  const BATCH = 600;
+  const tbody = document.createElement("tbody");
+  tableWrap.innerHTML = `<table><thead><tr><th style="width:72%">單字（Word）</th><th>級別（Level）</th></tr></thead></table>`;
+  tableWrap.querySelector("table").appendChild(tbody);
+
+  let i = 0;
+  function appendBatch() {
+    const end = Math.min(i + BATCH, list.length);
+    const frag = document.createDocumentFragment();
+    for (; i < end; i++) {
+      const w = list[i];
+      const hasSent = w.s && w.s.length;
+      const hasFam = w.fam && w.fam.length;
+      const expandable = hasSent || hasFam;
+      const tr = document.createElement("tr");
+      const tdW = document.createElement("td");
+      tdW.className = "word" + (expandable ? " clickable" : "");
+      tdW.textContent = w.word;
+      if (expandable) {
+        const mark = document.createElement("span");
+        mark.className = "has-sent";
+        mark.textContent = (hasSent ? `例句 ${w.s.length}` : "") + (hasSent && hasFam ? "・" : "") + (hasFam ? `家族 ${w.fam.length}` : "");
+        tdW.appendChild(mark);
+        const ch = document.createElement("span");
+        ch.className = "chev";
+        ch.textContent = "▸";
+        tdW.appendChild(ch);
+      }
+      const tdL = document.createElement("td");
+      const b = document.createElement("span");
+      b.className = "badge";
+      b.style.background = LEVEL_COLORS[levelKey(w.level)] || "#64748b";
+      b.textContent = lvlLabel(w.level);
+      tdL.appendChild(b);
+      tr.appendChild(tdW);
+      tr.appendChild(tdL);
+      frag.appendChild(tr);
+
+      if (expandable) {
+        const dtr = document.createElement("tr");
+        dtr.className = "detail-row";
+        dtr.style.display = "none";
+        const dtd = document.createElement("td");
+        dtd.colSpan = 2;
+        dtd.innerHTML = familyHtml(w) + (hasSent ? w.s.map(s => sentenceHtml(s, w.word)).join("") : "");
+        bindFamChips(dtd, w);
+        dtr.appendChild(dtd);
+        frag.appendChild(dtr);
+        tr.addEventListener("click", () => {
+          const hidden = dtr.style.display === "none";
+          dtr.style.display = hidden ? "" : "none";
+          ch.textContent = hidden ? "▾" : "▸";
+        });
+      }
+    }
+    tbody.appendChild(frag);
+    if (i < list.length) {
+      requestAnimationFrame(appendBatch);
+    }
+  }
+  requestAnimationFrame(appendBatch);
+}
+
+let debounceTimer = null;
+qEl.addEventListener("input", () => {
+  clearTimeout(debounceTimer);
+  debounceTimer = setTimeout(() => {
+    query = qEl.value;
+    scheduleRender();
+  }, 120);
+});
+
+function init() {
+  const data = window.WORDS_DATA || null;
+  if (!data || !data.words) {
+    loaderEl.textContent = "資料檔（data.js）載入失敗，請確認與 index.html 放在同一目錄。";
+    return;
+  }
+  META = data.meta || {};
+  WORDS = data.words;
+  loaderEl.style.display = "none";
+  const c = countByLevel();
+  renderStats(c);
+  renderLevelButtons(c);
+
+  const exams = (META.exams || []).map(e => e.name).join("、");
+  noteEl.textContent = exams
+    ? `已收錄模考：${exams}。點擊單字可展開該字在模考題目中出現的例句與中文釋義。`
+    : "目前收錄 1~6 級參考詞彙（Word + Level）。上傳歷屆模擬考後，將補齊題目例句與中文釋義，並新增 Lv.++ 模考新字。";
+  const ver = META.version ? ` 資料版本 ${META.version}` : "";
+  const count = META.words ? `，共 ${META.words.toLocaleString()} 字` : "";
+  document.title = document.title.replace(/（.*）$/, "") + `（${ver.trim() || ""}${count}）`;
+
+  scheduleRender();
+}
+if (window.WORDS_DATA) {
+  init();
+} else {
+  const s = document.createElement("script");
+  s.src = "data.js";
+  s.onload = init;
+  s.onerror = function () {
+    loaderEl.textContent = "資料檔（data.js）載入失敗，請確認與 index.html 放在同一目錄。";
+  };
+  document.body.appendChild(s);
+}
+
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("sw.js").catch(() => {});
+}
+</script>
+</body>
+</html>
