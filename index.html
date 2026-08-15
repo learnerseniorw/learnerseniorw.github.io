@@ -747,6 +747,11 @@ function showQuizQuestion() {
   input.focus();
   document.getElementById("quizSubmit").addEventListener("click", () => checkQuizAnswer(input.value));
   document.getElementById("quizSkip").addEventListener("click", () => {
+    if (input.disabled) {
+      quizIdx++;
+      showQuizQuestion();
+      return;
+    }
     const prog = quizProgress();
     prog.attempts[quizAnswer.word] = (prog.attempts[quizAnswer.word] || 0) + 1;
     saveQuizProgress(prog);
@@ -781,8 +786,6 @@ function checkQuizAnswer(val) {
   input.value = ok ? "" : "";
   document.getElementById("quizSubmit").disabled = true;
   document.getElementById("quizSkip").textContent = ok ? "下一題" : "下一題";
-  document.getElementById("quizSkip").onclick = null;
-  document.getElementById("quizSkip").addEventListener("click", () => { quizIdx++; showQuizQuestion(); });
 }
 
 function showQuizResult() {
