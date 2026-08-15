@@ -718,7 +718,6 @@ function showQuizQuestion() {
   const post = escapeHtml(ta.sent.slice(ta.end));
   viewQuizEl.innerHTML = `<div class="quiz-card">
     <div class="quiz-progress">第 ${qn} / ${quizItems.length} 題　答對 ${quizCorrect} 題</div>
-    <div class="quiz-qnum">${escapeHtml(ta.word)}</div>
     <div class="quiz-sent">${pre}<span class="blank">____</span>${post}</div>
     ${ta.zh ? `<div class="quiz-sent-zh">${escapeHtml(ta.zh)}</div>` : ""}
     <div class="quiz-input-row">
