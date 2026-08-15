@@ -3,7 +3,7 @@
  * data.js uses stale-while-revalidate so updates come through when online.
  */
 const VERSION = "vocab-v2";
-const CACHE = VERSION + "-v4";
+const CACHE = VERSION + "-v5";
 
 const PRECACHE = [
   "./",
