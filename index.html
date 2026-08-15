@@ -148,6 +148,7 @@
   .quiz-qnum { font-size: 13px; color: var(--accent); font-weight: 600; margin-bottom: 8px; }
   .quiz-sent { font-size: 17px; line-height: 1.7; margin-bottom: 14px; }
   .quiz-sent .blank { background: #fde68a; padding: 0 6px; border-radius: 4px; font-weight: 600; }
+  .quiz-sent-zh { font-size: 14px; color: var(--muted); line-height: 1.7; margin-bottom: 14px; }
   .quiz-input-row { display: flex; gap: 8px; margin-bottom: 12px; }
   #quizInput { flex: 1; padding: 11px 14px; font-size: 16px; border: 1px solid var(--line); border-radius: 8px; outline: none; }
   #quizInput:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
@@ -169,6 +170,7 @@
   .review-item .r-word { font-weight: 600; color: var(--accent); }
   .review-item .r-sent { font-size: 14px; line-height: 1.6; margin-top: 4px; }
   .review-item .r-sent mark { background: #fde68a; padding: 0 2px; border-radius: 2px; }
+  .review-item .r-zh { font-size: 13px; color: var(--muted); line-height: 1.6; margin-top: 2px; }
   .quiz-actions { display: flex; gap: 8px; margin-top: 14px; }
   .quiz-hint-line { font-size: 13px; color: var(--muted); margin-bottom: 10px; }
   .quiz-stats { font-size: 13px; color: var(--muted); line-height: 1.8; margin-bottom: 12px; }
@@ -583,7 +585,7 @@ function buildQuizPool() {
           const L = m[0].length;
           if (!best || L > best.L) {
             const orig = st.en.substr(m.index, L);
-            best = { word: w.word, level: w.level, sent: st.en, target: orig, start: m.index, end: m.index + L, L: L };
+            best = { word: w.word, level: w.level, sent: st.en, zh: st.zh || "", target: orig, start: m.index, end: m.index + L, L: L };
           }
         }
       }
@@ -718,6 +720,7 @@ function showQuizQuestion() {
     <div class="quiz-progress">第 ${qn} / ${quizItems.length} 題　答對 ${quizCorrect} 題</div>
     <div class="quiz-qnum">${escapeHtml(ta.word)}</div>
     <div class="quiz-sent">${pre}<span class="blank">____</span>${post}</div>
+    ${ta.zh ? `<div class="quiz-sent-zh">${escapeHtml(ta.zh)}</div>` : ""}
     <div class="quiz-input-row">
       <input id="quizInput" type="text" placeholder="請輸入答案" autocomplete="off" spellcheck="false">
       <button class="btn btn-primary" id="quizSubmit">確認</button>
@@ -774,7 +777,7 @@ function checkQuizAnswer(val) {
   const fullSent = `${pre}<mark>${escapeHtml(ta.target)}</mark>${post}`;
   fb.innerHTML = ok
     ? `<div class="ok">✓ 正確</div>`
-    : `<div class="no">✗ 錯誤　正確答案：${escapeHtml(ta.target)}</div><div class="review-item"><div class="r-sent">${fullSent}</div></div>`;
+    : `<div class="no">✗ 錯誤　正確答案：${escapeHtml(ta.target)}</div><div class="review-item"><div class="r-sent">${fullSent}</div>${ta.zh ? `<div class="r-zh">${escapeHtml(ta.zh)}</div>` : ""}</div>`;
   const input = document.getElementById("quizInput");
   input.disabled = true;
   input.value = ok ? "" : "";
@@ -796,6 +799,7 @@ function showQuizResult() {
     reviewHtml += `<div class="review-item">
       <div class="r-word">${escapeHtml(ta.word)}</div>
       <div class="r-sent">${pre}<mark>${escapeHtml(ta.target)}</mark>${post}</div>
+      ${ta.zh ? `<div class="r-zh">${escapeHtml(ta.zh)}</div>` : ""}
     </div>`;
   }
   viewQuizEl.innerHTML = `<div class="quiz-card">
