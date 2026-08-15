@@ -109,7 +109,6 @@
   .sent-block .sent-exam { font-size: 12px; color: var(--accent); font-weight: 600; margin-bottom: 3px; }
   .sent-block .sent-en { font-size: 14.5px; color: var(--ink); line-height: 1.6; }
   .sent-block .sent-en mark { background: #fde68a; padding: 0 2px; border-radius: 2px; }
-  .sent-block .sent-zh { font-size: 14px; color: #374151; margin-top: 4px; line-height: 1.6; }
   .empty { text-align: center; color: var(--muted); padding: 40px 0; font-size: 14px; }
   #loader { text-align: center; color: var(--muted); padding: 30px; font-size: 14px; }
   footer { text-align: center; color: var(--muted); font-size: 12px; padding: 20px; }
@@ -235,7 +234,6 @@ function sentenceHtml(s, word) {
   return `<div class="sent-block">
     <div class="sent-exam">${esc(s.exam || "模擬考")}</div>
     <div class="sent-en">${enHl}</div>
-    <div class="sent-zh">${esc(s.zh)}</div>
   </div>`;
 }
 
@@ -390,8 +388,8 @@ function init() {
 
   const exams = (META.exams || []).map(e => e.name).join("、");
   noteEl.textContent = exams
-    ? `已收錄模考：${exams}。點擊單字可展開該字在模考題目中出現的例句與中文釋義。`
-    : "目前收錄 1~6 級參考詞彙（Word + Level）。上傳歷屆模擬考後，將補齊題目例句與中文釋義，並新增 Lv.++ 模考新字。";
+    ? `已收錄模考：${exams}。點擊單字可展開該字在模考題目中出現的例句。`
+    : "目前收錄 1~6 級參考詞彙（Word + Level）。上傳歷屆模擬考後，將補齊題目例句，並新增 Lv.++ 模考新字。";
   const ver = META.version ? ` 資料版本 ${META.version}` : "";
   const count = META.words ? `，共 ${META.words.toLocaleString()} 字` : "";
   document.title = document.title.replace(/（.*）$/, "") + `（${ver.trim() || ""}${count}）`;
