@@ -117,6 +117,47 @@
     header h1 { font-size: 20px; }
     th, td { padding: 8px 10px; font-size: 14px; }
   }
+  .tabs { display: flex; gap: 8px; margin-bottom: 12px; }
+  .tab-btn {
+    flex: 1; padding: 10px 14px; font-size: 14px; font-weight: 600;
+    background: var(--card); border: 1px solid var(--line); border-radius: 10px;
+    cursor: pointer; color: var(--muted); transition: all .15s ease;
+  }
+  .tab-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .quiz-card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 18px; }
+  .quiz-card h3 { font-size: 16px; margin-bottom: 14px; }
+  .quiz-row { margin-bottom: 14px; }
+  .quiz-row .lbl { font-size: 13px; color: var(--muted); font-weight: 600; margin-bottom: 6px; }
+  .quiz-counts { display: flex; gap: 8px; }
+  .quiz-progress { font-size: 13px; color: var(--muted); margin-bottom: 10px; }
+  .quiz-qnum { font-size: 13px; color: var(--accent); font-weight: 600; margin-bottom: 8px; }
+  .quiz-sent { font-size: 17px; line-height: 1.7; margin-bottom: 14px; }
+  .quiz-sent .blank { background: #fde68a; padding: 0 6px; border-radius: 4px; font-weight: 600; }
+  .quiz-input-row { display: flex; gap: 8px; margin-bottom: 12px; }
+  #quizInput { flex: 1; padding: 11px 14px; font-size: 16px; border: 1px solid var(--line); border-radius: 8px; outline: none; }
+  #quizInput:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+  .btn {
+    padding: 10px 18px; font-size: 14px; font-weight: 600; border: none;
+    border-radius: 8px; cursor: pointer; transition: all .15s ease;
+  }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { filter: brightness(1.06); }
+  .btn-ghost { background: #fff; color: var(--muted); border: 1px solid var(--line); }
+  .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+  .btn:disabled { opacity: .5; cursor: default; }
+  .quiz-feedback { font-size: 14px; margin-bottom: 12px; line-height: 1.6; }
+  .quiz-feedback .ok { color: var(--l1); font-weight: 600; }
+  .quiz-feedback .no { color: #dc2626; font-weight: 600; }
+  .quiz-result-head { font-size: 22px; font-weight: 700; margin-bottom: 6px; }
+  .quiz-result-sub { font-size: 14px; color: var(--muted); margin-bottom: 16px; }
+  .review-item { border-top: 1px solid var(--line); padding: 12px 0; }
+  .review-item .r-word { font-weight: 600; color: var(--accent); }
+  .review-item .r-sent { font-size: 14px; line-height: 1.6; margin-top: 4px; }
+  .review-item .r-sent mark { background: #fde68a; padding: 0 2px; border-radius: 2px; }
+  .quiz-actions { display: flex; gap: 8px; margin-top: 14px; }
+  .quiz-hint-line { font-size: 13px; color: var(--muted); margin-bottom: 10px; }
+  .quiz-stats { font-size: 13px; color: var(--muted); line-height: 1.8; margin-bottom: 12px; }
+
 </style>
 </head>
 <body>
@@ -127,6 +168,12 @@
 </header>
 
 <main>
+  <div class="tabs">
+    <button class="tab-btn active" id="tabBrowse">單字瀏覽</button>
+    <button class="tab-btn" id="tabQuiz">測驗</button>
+  </div>
+
+  <div id="viewBrowse">
   <div class="controls">
     <div class="search-row">
       <input id="q" type="search" placeholder="搜尋英文單字，例如：achieve" autocomplete="off">
@@ -139,6 +186,30 @@
   <div id="loader">資料載入中…</div>
   <div id="tableWrap" style="display:none"></div>
   <div id="empty" class="empty" style="display:none">找不到符合條件的單字。</div>
+  </div>
+
+  <div id="viewQuiz" style="display:none">
+    <div class="quiz-card">
+      <h3>測驗設定</h3>
+      <div class="quiz-row">
+        <div class="lbl">級別範圍</div>
+        <div class="levels" id="quizLevels"></div>
+      </div>
+      <div class="quiz-row">
+        <div class="lbl">題數</div>
+        <div class="quiz-counts" id="quizCounts">
+          <button class="lvl-btn active" data-n="10">10 題</button>
+          <button class="lvl-btn" data-n="20">20 題</button>
+          <button class="lvl-btn" data-n="50">50 題</button>
+        </div>
+      </div>
+      <div class="quiz-stats" id="quizStats"></div>
+      <div class="quiz-actions">
+        <button class="btn btn-primary" id="quizStart">開始測驗</button>
+        <button class="btn btn-ghost" id="quizReset">清除進度</button>
+      </div>
+    </div>
+  </div>
 </main>
 
 <footer>單字資料僅供學習用途。資料以原文件為準。</footer>
@@ -373,6 +444,356 @@ qEl.addEventListener("input", () => {
   }, 120);
 });
 
+/* ===== 測驗功能 ===== */
+const QUIZ_STORE_KEY = "vocabQuizProgress_v1";
+
+const tabBrowseEl = document.getElementById("tabBrowse");
+const tabQuizEl = document.getElementById("tabQuiz");
+const viewBrowseEl = document.getElementById("viewBrowse");
+const viewQuizEl = document.getElementById("viewQuiz");
+
+let quizLevelsEl = document.getElementById("quizLevels");
+let quizStatsEl = document.getElementById("quizStats");
+let quizStartBtn = document.getElementById("quizStart");
+let quizResetBtn = document.getElementById("quizReset");
+let quizCountsEl = null;
+
+let quizLevel = 0;       // 0 = all
+let quizCount = 10;
+let quizPool = [];       // [{word, level, sent, target, forms}]
+let quizItems = [];      // shuffled quiz order
+let quizIdx = 0;
+let quizCorrect = 0;
+let quizAnswer = null;   // {word, sent, blankHtml, target}
+
+function quizProgress() {
+  try { return JSON.parse(localStorage.getItem(QUIZ_STORE_KEY)) || { attempts: {}, correct: {} }; }
+  catch (e) { return { attempts: {}, correct: {} }; }
+}
+function saveQuizProgress(p) { localStorage.setItem(QUIZ_STORE_KEY, JSON.stringify(p)); }
+
+function expandWordForms(word) {
+  const out = new Set();
+  let e = word.trim().replace(/"/g, "");
+  while (true) {
+    const lp = e.indexOf("(");
+    if (lp < 0) break;
+    const rp = e.indexOf(")", lp);
+    if (rp < 0) break;
+    const pre = e.slice(0, lp);
+    const inner = e.slice(lp + 1, rp);
+    const post = e.slice(rp + 1);
+    out.add(pre + post);
+    out.add(pre + inner + post);
+    e = pre + inner + post;
+  }
+  out.add(e);
+  const parts = new Set();
+  for (const o of out) {
+    for (const p of o.split(/[/, ]+/)) {
+      const t = p.trim();
+      if (/^[A-Za-z']+$/.test(t)) parts.add(t.toLowerCase());
+    }
+  }
+  return parts;
+}
+
+function inflections(w) {
+  const s = new Set([w]);
+  if (w.length < 3) { s.add(w + "s"); return s; }
+  if (w.endsWith("y") && !/[aeiou]y$/.test(w)) {
+    const stem = w.slice(0, -1);
+    ["ies", "ied", "ier", "iest"].forEach(x => s.add(stem + x));
+    s.add(w + "s"); s.add(w + "es");
+  } else if (/(s|x|ch|sh|z)$/.test(w)) {
+    ["es", "s", "ed", "ing"].forEach(x => s.add(w + x));
+  } else if (w.endsWith("e")) {
+    ["s", "d"].forEach(x => s.add(w + x));
+    s.add(w.slice(0, -1) + "ing");
+  } else {
+    ["s", "es", "ed", "ing", "er", "est"].forEach(x => s.add(w + x));
+  }
+  if (/^[a-z]*[aeiou][bcdfghjklmnpqrstvwxz]$/.test(w)) {
+    s.add(w + w.slice(-1) + "ed");
+    s.add(w + w.slice(-1) + "ing");
+  }
+  return s;
+}
+
+const QUIZ_FUNC = new Set(("a an the and of to be for in on at by with or so as if not but "
+  + "it its he his she her they their we our you your i me my them us this that these those "
+  + "is are was were has have had do does did can could may might will would shall should "
+  + "than then there here when where why how what which who whom all any each every no yes "
+  + "into onto from over under between among about through after before during since until "
+  + "while if because though although unless up down out off above below near").split(" "));
+
+function buildQuizPool() {
+  const pool = [];
+  const cache = new Map();
+  for (const w of WORDS) {
+    const sents = w.s || [];
+    if (!sents.length) continue;
+    const bases = expandWordForms(w.word);
+    if (bases.size && [...bases].every(b => QUIZ_FUNC.has(b)) && !(w.fam && w.fam.length)) continue;
+    let forms = cache.get(w.word);
+    if (!forms) {
+      forms = new Set();
+      for (const f of expandWordForms(w.word)) for (const i of inflections(f)) forms.add(i);
+      for (const f of (w.fam || [])) for (const i of inflections(String(f).toLowerCase())) forms.add(i);
+      cache.set(w.word, forms);
+    }
+    let best = null;
+    for (const st of sents) {
+      const enL = st.en.toLowerCase();
+      for (const f of forms) {
+        const fl = f.toLowerCase();
+        if (fl.length < 3 || QUIZ_FUNC.has(fl)) continue;
+        const re = new RegExp("\\b" + fl.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "\\b", "g");
+        let m;
+        while ((m = re.exec(enL)) !== null) {
+          const L = m[0].length;
+          if (!best || L > best.L) {
+            const orig = st.en.substr(m.index, L);
+            best = { word: w.word, level: w.level, sent: st.en, target: orig, start: m.index, end: m.index + L, L: L };
+          }
+        }
+      }
+    }
+    if (best) {
+      best.bases = bases;
+      pool.push(best);
+    }
+  }
+  return pool;
+}
+
+function quizLevelMatches(lv) {
+  if (quizLevel === 0) return true;
+  return String(lv) === String(quizLevel);
+}
+
+function buildQuizItems() {
+  const pool = quizPool.filter(p => quizLevelMatches(p.level));
+  if (!pool.length) return;
+  const prog = quizProgress();
+  const unmastered = pool.filter(p => !prog.correct[p.word]);
+  const rest = pool.filter(p => prog.correct[p.word]);
+  const shuffled = (arr) => {
+    const a = arr.slice();
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  };
+  quizItems = shuffled(unmastered).concat(shuffled(rest)).slice(0, quizCount);
+  quizIdx = 0;
+  quizCorrect = 0;
+}
+
+function renderQuizStats() {
+  const prog = quizProgress();
+  const pool = quizPool.filter(p => quizLevelMatches(p.level));
+  const mastered = pool.filter(p => prog.correct[p.word]).length;
+  const total = pool.length;
+  quizStatsEl.textContent = `題庫 ${total} 字，已掌握 ${mastered} 字（答對過一次以上）。測驗會優先抽未掌握的字。`;
+}
+
+function blankHtml(ta) {
+  const pre = escapeHtml(ta.sent.slice(0, ta.start));
+  const post = escapeHtml(ta.sent.slice(ta.end));
+  return `<span class="blank">____</span>`;
+}
+function escapeHtml(s) {
+  return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+function renderQuizSetup() {
+  const btns = `<button class="lvl-btn active" data-lvl="0">全部<span class="cnt">${quizPool.length.toLocaleString()}</span></button>` +
+    [1, 2, 3, 4, 5, 6].map(l => {
+      const n = quizPool.filter(p => p.level === l).length;
+      return `<button class="lvl-btn" data-lvl="${l}">Lv.${l}<span class="cnt">${n.toLocaleString()}</span></button>`;
+    }).join("") +
+    `<button class="lvl-btn" data-lvl="++">Lv.++<span class="cnt">${quizPool.filter(p => p.level === "++").length.toLocaleString()}</span></button>`;
+  quizLevelsEl.innerHTML = btns;
+  quizLevelsEl.querySelectorAll(".lvl-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      quizLevelsEl.querySelectorAll(".lvl-btn").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      quizLevel = btn.dataset.lvl === "0" ? 0 : (btn.dataset.lvl === "++" ? "++" : parseInt(btn.dataset.lvl, 10));
+      renderQuizStats();
+    });
+  });
+  quizCountsEl.querySelectorAll(".lvl-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      quizCountsEl.querySelectorAll(".lvl-btn").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      quizCount = parseInt(btn.dataset.n, 10);
+    });
+  });
+  renderQuizStats();
+}
+
+function showQuizView() {
+  tabBrowseEl.classList.remove("active");
+  tabQuizEl.classList.add("active");
+  viewBrowseEl.style.display = "none";
+  viewQuizEl.style.display = "block";
+  viewQuizEl.innerHTML = `<div class="quiz-card">
+    <h3>測驗設定</h3>
+    <div class="quiz-row"><div class="lbl">級別範圍</div><div class="levels" id="quizLevels"></div></div>
+    <div class="quiz-row"><div class="lbl">題數</div><div class="quiz-counts" id="quizCounts">
+      <button class="lvl-btn active" data-n="10">10 題</button>
+      <button class="lvl-btn" data-n="20">20 題</button>
+      <button class="lvl-btn" data-n="50">50 題</button>
+    </div></div>
+    <div class="quiz-stats" id="quizStats"></div>
+    <div class="quiz-actions">
+      <button class="btn btn-primary" id="quizStart">開始測驗</button>
+      <button class="btn btn-ghost" id="quizReset">清除進度</button>
+    </div>
+  </div>`;
+  quizLevelsEl = document.getElementById("quizLevels");
+  quizCountsEl = document.getElementById("quizCounts");
+  quizStatsEl = document.getElementById("quizStats");
+  quizStartBtn = document.getElementById("quizStart");
+  quizResetBtn = document.getElementById("quizReset");
+  quizStartBtn.addEventListener("click", startQuiz);
+  quizResetBtn.addEventListener("click", () => {
+    if (!confirm("確定要清除所有測驗進度嗎？")) return;
+    localStorage.removeItem(QUIZ_STORE_KEY);
+    renderQuizStats();
+  });
+  renderQuizSetup();
+}
+
+function showBrowseView() {
+  tabBrowseEl.classList.add("active");
+  tabQuizEl.classList.remove("active");
+  viewBrowseEl.style.display = "block";
+  viewQuizEl.style.display = "none";
+}
+
+function showQuizQuestion() {
+  if (quizIdx >= quizItems.length) {
+    showQuizResult();
+    return;
+  }
+  const ta = quizItems[quizIdx];
+  quizAnswer = ta;
+  const prog = quizProgress();
+  const qn = quizIdx + 1;
+  const pre = escapeHtml(ta.sent.slice(0, ta.start));
+  const post = escapeHtml(ta.sent.slice(ta.end));
+  viewQuizEl.innerHTML = `<div class="quiz-card">
+    <div class="quiz-progress">第 ${qn} / ${quizItems.length} 題　答對 ${quizCorrect} 題</div>
+    <div class="quiz-qnum">${escapeHtml(ta.word)}</div>
+    <div class="quiz-sent">${pre}<span class="blank">____</span>${post}</div>
+    <div class="quiz-input-row">
+      <input id="quizInput" type="text" placeholder="請輸入答案" autocomplete="off" spellcheck="false">
+      <button class="btn btn-primary" id="quizSubmit">確認</button>
+    </div>
+    <div class="quiz-hint-line"><label><input type="checkbox" id="quizHint"> 顯示首字母提示</label></div>
+    <div class="quiz-feedback" id="quizFeedback"></div>
+    <div class="quiz-actions" id="quizActions">
+      <button class="btn btn-ghost" id="quizSkip">跳過</button>
+    </div>
+  </div>`;
+  const input = document.getElementById("quizInput");
+  const hintCb = document.getElementById("quizHint");
+  hintCb.addEventListener("change", () => {
+    if (hintCb.checked) {
+      const w = quizAnswer.target;
+      const t = escapeHtml(w.length >= 1 ? w[0] + "_".repeat(Math.max(3, w.length - 1)) : w);
+      const pre2 = escapeHtml(quizAnswer.sent.slice(0, quizAnswer.start));
+      const post2 = escapeHtml(quizAnswer.sent.slice(quizAnswer.end));
+      document.querySelector(".quiz-sent").innerHTML = `${pre2}<span class="blank">${t}</span>${post2}`;
+    } else {
+      const pre2 = escapeHtml(quizAnswer.sent.slice(0, quizAnswer.start));
+      const post2 = escapeHtml(quizAnswer.sent.slice(quizAnswer.end));
+      document.querySelector(".quiz-sent").innerHTML = `${pre2}<span class="blank">____</span>${post2}`;
+    }
+  });
+  input.focus();
+  document.getElementById("quizSubmit").addEventListener("click", () => checkQuizAnswer(input.value));
+  document.getElementById("quizSkip").addEventListener("click", () => {
+    const prog = quizProgress();
+    prog.attempts[quizAnswer.word] = (prog.attempts[quizAnswer.word] || 0) + 1;
+    saveQuizProgress(prog);
+    quizIdx++;
+    showQuizQuestion();
+  });
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") checkQuizAnswer(input.value);
+  });
+}
+
+function checkQuizAnswer(val) {
+  const ta = quizAnswer;
+  const ans = val.trim().toLowerCase().replace(/[^a-z']/g, "");
+  const ok = ans === ta.target.toLowerCase() || (ta.bases && ta.bases.has(ans));
+  const prog = quizProgress();
+  prog.attempts[ta.word] = (prog.attempts[ta.word] || 0) + 1;
+  if (ok) {
+    prog.correct[ta.word] = (prog.correct[ta.word] || 0) + 1;
+    quizCorrect++;
+  }
+  saveQuizProgress(prog);
+  const fb = document.getElementById("quizFeedback");
+  const pre = escapeHtml(ta.sent.slice(0, ta.start));
+  const post = escapeHtml(ta.sent.slice(ta.end));
+  const fullSent = `${pre}<mark>${escapeHtml(ta.target)}</mark>${post}`;
+  fb.innerHTML = ok
+    ? `<div class="ok">✓ 正確</div>`
+    : `<div class="no">✗ 錯誤　正確答案：${escapeHtml(ta.target)}</div><div class="review-item"><div class="r-sent">${fullSent}</div></div>`;
+  const input = document.getElementById("quizInput");
+  input.disabled = true;
+  input.value = ok ? "" : "";
+  document.getElementById("quizSubmit").disabled = true;
+  document.getElementById("quizSkip").textContent = ok ? "下一題" : "下一題";
+  document.getElementById("quizSkip").onclick = null;
+  document.getElementById("quizSkip").addEventListener("click", () => { quizIdx++; showQuizQuestion(); });
+}
+
+function showQuizResult() {
+  const total = quizItems.length;
+  const pct = Math.round(quizCorrect / total * 100);
+  const prog = quizProgress();
+  let reviewHtml = "";
+  for (const ta of quizItems) {
+    if (prog.correct[ta.word]) continue;
+    const pre = escapeHtml(ta.sent.slice(0, ta.start));
+    const post = escapeHtml(ta.sent.slice(ta.end));
+    reviewHtml += `<div class="review-item">
+      <div class="r-word">${escapeHtml(ta.word)}</div>
+      <div class="r-sent">${pre}<mark>${escapeHtml(ta.target)}</mark>${post}</div>
+    </div>`;
+  }
+  viewQuizEl.innerHTML = `<div class="quiz-card">
+    <div class="quiz-result-head">${quizCorrect} / ${total}</div>
+    <div class="quiz-result-sub">正確率 ${pct}%。${pct === 100 ? "全部答對，太棒了！" : pct >= 70 ? "表現不錯，繼續加油！" : "多練習幾次會更好。"}</div>
+    ${reviewHtml ? `<div class="quiz-row"><div class="lbl">未答對的單字（${quizItems.filter(t => !prog.correct[t.word]).length}）</div>${reviewHtml}</div>` : ""}
+    <div class="quiz-actions">
+      <button class="btn btn-primary" id="quizAgain">再測一次</button>
+      <button class="btn btn-ghost" id="quizBack">回設定</button>
+    </div>
+  </div>`;
+  document.getElementById("quizAgain").addEventListener("click", () => { buildQuizItems(); showQuizQuestion(); });
+  document.getElementById("quizBack").addEventListener("click", showQuizView);
+}
+
+function startQuiz() {
+  buildQuizItems();
+  if (!quizItems.length) {
+    alert("此範圍沒有可出題的例句單字。");
+    return;
+  }
+  showQuizQuestion();
+}
+
+tabBrowseEl.addEventListener("click", showBrowseView);
+tabQuizEl.addEventListener("click", showQuizView);
+
 function init() {
   const data = window.WORDS_DATA || null;
   if (!data || !data.words) {
@@ -382,6 +803,8 @@ function init() {
   META = data.meta || {};
   WORDS = data.words;
   loaderEl.style.display = "none";
+  quizPool = buildQuizPool();
+  renderQuizSetup();
   const c = countByLevel();
   renderStats(c);
   renderLevelButtons(c);
