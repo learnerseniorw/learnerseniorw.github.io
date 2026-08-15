@@ -63,7 +63,21 @@
     position: sticky; top: 8px; z-index: 5;
     box-shadow: 0 4px 14px rgba(31,36,48,.06);
   }
-  .search-row { display: flex; gap: 10px; align-items: center; }
+  .search-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .search-row #q { flex: 1; min-width: 200px; }
+  .zh-toggle { display: inline-flex; align-items: center; gap: 7px; cursor: pointer; user-select: none; font-size: 13px; color: var(--muted); white-space: nowrap; }
+  .zh-toggle input { position: absolute; opacity: 0; width: 0; height: 0; }
+  .zh-slider {
+    width: 34px; height: 19px; background: #cbd5e1; border-radius: 999px;
+    position: relative; transition: background .15s ease; flex: none;
+  }
+  .zh-slider::after {
+    content: ""; position: absolute; top: 2px; left: 2px; width: 15px; height: 15px;
+    background: #fff; border-radius: 50%; transition: transform .15s ease;
+  }
+  .zh-toggle input:checked + .zh-slider { background: var(--accent); }
+  .zh-toggle input:checked + .zh-slider::after { transform: translateX(15px); }
+  .zh-toggle input:checked ~ .zh-label { color: var(--accent); font-weight: 600; }
   #q {
     flex: 1; padding: 11px 14px; font-size: 15px;
     border: 1px solid var(--line); border-radius: 8px;
@@ -109,6 +123,7 @@
   .sent-block .sent-exam { font-size: 12px; color: var(--accent); font-weight: 600; margin-bottom: 3px; }
   .sent-block .sent-en { font-size: 14.5px; color: var(--ink); line-height: 1.6; }
   .sent-block .sent-en mark { background: #fde68a; padding: 0 2px; border-radius: 2px; }
+  .sent-block .sent-zh { font-size: 13.5px; color: var(--muted); line-height: 1.6; margin-top: 4px; }
   .empty { text-align: center; color: var(--muted); padding: 40px 0; font-size: 14px; }
   #loader { text-align: center; color: var(--muted); padding: 30px; font-size: 14px; }
   footer { text-align: center; color: var(--muted); font-size: 12px; padding: 20px; }
@@ -177,6 +192,11 @@
   <div class="controls">
     <div class="search-row">
       <input id="q" type="search" placeholder="搜尋英文單字，例如：achieve" autocomplete="off">
+      <label class="zh-toggle" title="在例句下方顯示中文翻譯">
+        <input type="checkbox" id="showZh">
+        <span class="zh-slider"></span>
+        <span class="zh-label">顯示翻譯</span>
+      </label>
     </div>
     <div class="levels" id="levels"></div>
     <div class="note" id="note"></div>
@@ -295,6 +315,8 @@ function esc(s) {
   return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
 }
 
+let showZh = false;
+
 function sentenceHtml(s, word) {
   const escRe = (t) => String(t).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   const en = esc(s.en);
@@ -305,6 +327,7 @@ function sentenceHtml(s, word) {
   return `<div class="sent-block">
     <div class="sent-exam">${esc(s.exam || "模擬考")}</div>
     <div class="sent-en">${enHl}</div>
+    ${showZh && s.zh ? `<div class="sent-zh">${esc(s.zh)}</div>` : ""}
   </div>`;
 }
 
@@ -442,6 +465,12 @@ qEl.addEventListener("input", () => {
     query = qEl.value;
     scheduleRender();
   }, 120);
+});
+
+const showZhEl = document.getElementById("showZh");
+showZhEl.addEventListener("change", () => {
+  showZh = showZhEl.checked;
+  scheduleRender();
 });
 
 /* ===== 測驗功能 ===== */
